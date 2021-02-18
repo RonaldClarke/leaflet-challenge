@@ -1,42 +1,3 @@
-var geoData = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
-var plateData = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json"
-
-var quakeMarkers = [];
-var plateMarkers = [];
-
-d3.json(geoData, function(data) {
-    //console.log(data)
-  data.features.forEach(function (response) {
-    quakeMarkers.push(L.circle([response.geometry.coordinates[1], response.geometry.coordinates[0]], {
-      color: "black",
-      fillColor: colorDepth(response.geometry.coordinates[2]),
-      fillOpacity: 0.8,
-      weight: 0.5,
-      radius: (response.properties.mag)*20000
-      }).bindPopup(`Location: ${response.properties.place}<br>
-                    Magnitude: ${response.properties.mag}<br>
-                    Depth: ${response.geometry.coordinates[2]}<br>
-                    Date: ${new Date(response.properties.time)}`));
-    });
-  });
-
-d3.json(plateData, function(data) {
-  data.features.forEach(function(response) {  
-    latlng = []
-    response.geometry.coordinates.forEach(function(point) {     
-      point.forEach(function(coord) {
-        latlng.push([coord[1], coord[0]])
-      });
-    });
-    plateMarkers.push(L.polygon(latlng, {color: "red", weight: 2, fillColor: "none"}));  
-  });
-});
-console.log(plateMarkers)
-console.log(quakeMarkers)
-
-var earthquakes = L.layerGroup(quakeMarkers);
-var plates = L.layerGroup(plateMarkers);
-
   // Define streetmap and darkmap layers
 var streetmap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
     attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
@@ -68,19 +29,56 @@ var baseMaps = {
     "Satellite": satellite
 };
 
+var geoData = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
+var plateData = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json"
+
+
+d3.json(geoData, function(data) {
+    //console.log(data)
+  data.features.forEach(function (response) {
+    L.circle([response.geometry.coordinates[1], response.geometry.coordinates[0]], {
+      color: "black",
+      fillColor: colorDepth(response.geometry.coordinates[2]),
+      fillOpacity: 0.8,
+      weight: 0.5,
+      radius: (response.properties.mag)*20000
+      }).bindPopup(`Location: ${response.properties.place}<br>
+                    Magnitude: ${response.properties.mag}<br>
+                    Depth: ${response.geometry.coordinates[2]}<br>
+                    Date: ${new Date(response.properties.time)}`).addTo(earthquakes);
+    })
+  });
+
+d3.json(plateData, function(data) {
+  data.features.forEach(function(response) {  
+    latlng = []
+    response.geometry.coordinates.forEach(function(point) {     
+      point.forEach(function(coord) {
+        latlng.push([coord[1], coord[0]])
+      });
+    });
+    L.polygon(latlng, {color: "red", weight: 2, fillColor: "none"}).addTo(plates);  
+  });
+});
+
+
+var earthquakes = L.layerGroup();
+var plates = L.layerGroup();
+
+
   // Create overlay object to hold our overlay layer
 var overlayMaps = {
     "Earthquakes": earthquakes,
     "Techtonic Plates": plates
 };
 
-  // Create our map, giving it the streetmap and earthquakes layers to display on load
+  // Create our map
 var myMap = L.map("map", {
     center: [
-      37.09, -95.71
+      40.09, -120.71
     ],
-    zoom: 5,
-    layers: [streetmap, earthquakes]
+    zoom: 4,
+    layers: [streetmap, earthquakes, plates]
 });
 
 var legend = L.control({ position: "bottomright" });
